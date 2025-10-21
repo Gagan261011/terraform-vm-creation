@@ -3,11 +3,17 @@ name: Azure - Create Two VMs
 on:
   workflow_dispatch:
     inputs:
-      az_username:
-        description: 'Azure Username'
+      client_id:
+        description: 'Azure Application (Client) ID'
         required: true
-      az_password:
-        description: 'Azure Password'
+      client_secret:
+        description: 'Azure Client Secret'
+        required: true
+      subscription_id:
+        description: 'Azure Subscription ID'
+        required: true
+      tenant_id:
+        description: 'Azure Tenant ID'
         required: true
 
 jobs:
@@ -24,12 +30,13 @@ jobs:
           sudo apt-add-repository "deb [arch=amd64] https://apt.releases.hashicorp.com $(lsb_release -cs) main"
           sudo apt-get update && sudo apt-get install terraform
 
-      - name: Mask Azure Password
-        run: echo "::add-mask::${{ inputs.az_password }}"
-
       - name: Azure Login
-        run: |
-          az login -u "${{ inputs.az_username }}" -p "${{ inputs.az_password }}" --output none
+        uses: azure/login@v1
+        with:
+          client-id: ${{ inputs.client_id }}
+          client-secret: ${{ inputs.client_secret }}
+          subscription-id: ${{ inputs.subscription_id }}
+          tenant-id: ${{ inputs.tenant_id }}
 
       - name: Discover Resource Group and Location
         run: |

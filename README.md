@@ -1,15 +1,25 @@
 # Azure Two VMs Provisioning with Terraform and GitHub Actions
 
-This project automates the provisioning of two Ubuntu VMs in an existing Azure resource group using Terraform and GitHub Actions.
+This project automates the provisioning of two Ubuntu VMs in an existing Azure resource group using Terraform and GitHub Actions. This version uses Service Principal credentials for authentication.
 
 ## How to Use
+
+### Prerequisites
+
+You will need the following four credentials from your Azure account:
+*   Application (Client) ID
+*   Client Secret
+*   Subscription ID
+*   Tenant ID
+
+You can find your Subscription and Tenant IDs by logging into the Azure CLI and running `az account show`.
 
 ### Trigger the Workflow
 
 1.  Navigate to the **Actions** tab of your GitHub repository.
 2.  In the left sidebar, click on the **Azure - Create Two VMs** workflow.
 3.  Above the list of workflow runs, click the **Run workflow** dropdown.
-4.  Enter your Azure **username** and **password** (from KodeKloud).
+4.  Enter your Azure **Client ID**, **Client Secret**, **Subscription ID**, and **Tenant ID**.
 5.  Click the **Run workflow** button.
 
 ### Find the Outputs
