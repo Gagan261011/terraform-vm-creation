@@ -1,0 +1,63 @@
+name: Azure - Create Two VMs
+
+on:
+  workflow_dispatch:
+    inputs:
+      az_username:
+        description: 'Azure Username'
+        required: true
+      az_password:
+        description: 'Azure Password'
+        required: true
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Install Terraform
+        run: |
+          sudo apt-get update && sudo apt-get install -y gnupg software-properties-common curl
+          curl -fsSL https://apt.releases.hashicorp.com/gpg | sudo apt-key add -
+          sudo apt-add-repository "deb [arch=amd64] https://apt.releases.hashicorp.com $(lsb_release -cs) main"
+          sudo apt-get update && sudo apt-get install terraform
+
+      - name: Mask Azure Password
+        run: echo "::add-mask::${{ inputs.az_password }}"
+
+      - name: Azure Login
+        run: |
+          az login -u "${{ inputs.az_username }}" -p "${{ inputs.az_password }}" --output none
+
+      - name: Discover Resource Group and Location
+        run: |
+          RG_DETAILS=$(az group list --query "[0].{name:name, location:location}" -o tsv)
+          RG_NAME=$(echo "$RG_DETAILS" | cut -f1)
+          RG_LOCATION=$(echo "$RG_DETAILS" | cut -f2)
+          echo "Discovered RG Name: $RG_NAME"
+          echo "Discovered Location: $RG_LOCATION"
+          echo "TF_VAR_resource_group_name=$RG_NAME" >> $GITHUB_ENV
+          echo "TF_VAR_location=$RG_LOCATION" >> $GITHUB_ENV
+
+      - name: Terraform Init
+        run: terraform init
+
+      - name: Terraform Apply
+        run: terraform apply -auto-approve
+
+      - name: Show Terraform Outputs
+        run: terraform output
+
+      - name: Get SSH Key Path
+        id: ssh_key_path
+        run: |
+          KEY_PATH=$(terraform output -raw ssh_private_key_path)
+          echo "key_path=$KEY_PATH" >> $GITHUB_OUTPUT
+
+      - name: Upload SSH Private Key
+        uses: actions/upload-artifact@v4
+        with:
+          name: ssh-private-key
+          path: ${{ steps.ssh_key_path.outputs.key_path }}
